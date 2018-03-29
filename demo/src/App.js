@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import Editor from 'draft-js-plugins-editor';
 import { EditorState } from 'draft-js';
-import createMDPlugin from 'draft-js-md-plugin';
+import createMDPlugin from './draft-js-md-plugin';
 
 import logo from './logo.svg';
 import './App.css';
@@ -11,7 +11,7 @@ console.log('createMDPlugin', createMDPlugin);
 
 const mdPlugin = createMDPlugin();
 
-// const plugins = [mdPlugin];
+const plugins = [mdPlugin];
 
 class App extends Component {
   state = {
@@ -31,11 +31,19 @@ class App extends Component {
           <img src={logo} className="App-logo" alt="logo" />
           <h1 className="App-title">Welcome to React</h1>
         </header>
-        <Editor
-          editorState={this.state.editorState}
-          onChange={this.onChange}
-          // plugins={plugins}
-        />
+        <div style={{
+          width: 300,
+          height: 300,
+          padding: 20,
+          margin: '0 auto',
+        }}>
+          <Editor
+            placeholder="here..."
+            editorState={this.state.editorState}
+            onChange={this.onChange}
+            plugins={plugins}
+          />
+        </div>
       </div>
     );
   }
