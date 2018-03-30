@@ -1,8 +1,17 @@
 import React from 'react';
 
-import { EditorState, Modifier } from 'draft-js';
+import { EditorState, Modifier, RichUtils } from 'draft-js';
 
-import blockStrategy from './blockStrategy';
+var every = (text, character) => {
+  if (!text || !character) return false;
+  let leng = text.length;
+
+  while(leng--) {
+    if (text[leng] !== character) return false;
+  }
+
+  return true;
+};
 
 const getCurrentText = editorState => {
   const selection = editorState.getSelection();
@@ -13,6 +22,15 @@ const getCurrentText = editorState => {
     .getBlockForKey(key)
     .getText();
 };
+
+const headerMap = [
+  'header-one',
+  'header-two',
+  'header-three',
+  'header-four',
+  'header-five',
+  'header-six',
+];
 
 const createMDPlugin = (config = {}) => {
   const store = {
@@ -34,18 +52,37 @@ const createMDPlugin = (config = {}) => {
       }
 
       const text = getCurrentText(editorState);
-      const currentContent = editorState.getCurrentContent();
-      const selection = editorState.getSelection();
 
-      const newEditorState = EditorState.push(
-        editorState,
-        Modifier.setBlockType(currentContent, selection, 'header-one'),
-        'change-block-type'
-      );
+      if (!text.startsWith('#')) {
+        return 'not-handled';
+      }
 
-      setEditorState(newEditorState);
+      if (text.startsWith('#') && character === ' ') {
+        console.log('here', text);
+        const currentContent = editorState.getCurrentContent();
+        const selection = editorState.getSelection();
+        const position = selection.getAnchorOffset();
+        const sharps = every(text.slice(0, position), '#');
 
-      return 'handled';
+        if (sharps) {
+          const i = text.length;
+
+          const header = headerMap[i];
+
+          const newEditorState = EditorState.push(
+            editorState,
+            Modifier.setBlockType(currentContent, selection, header),
+            // newContent,
+            'change-block-type'
+          );
+  
+          setEditorState(newEditorState);
+
+          return 'handled';
+        }
+      }
+
+      return 'not-handled';
     },
 
     handleReturn(ev, editorState, { setEditorState }) {
