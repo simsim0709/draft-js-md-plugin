@@ -69,21 +69,44 @@ const inlineMap = {
 
 const md = new MarkdownIt();
 
-export const renderInline = ({ content, selection }, tokens) => {
-  const result = tokens.reduce((acc, { type, content }) => {
-    Modifier.applyInlineStyle(content, selection, 'BOLD');
-    if (type === 'strong_open') {
-      return acc + `<strong>`;
+export const renderInline = ({ editorState, contentState, selectionState }, tokens) => {
+  console.log('tokens', tokens);
+  const result = tokens.reduce((acc, { type, tag, content, ...rest }) => {
+    console.log('token', type, tag, content, rest);
+    // Modifier.applyInlineStyle(content, selection, 'BOLD');
+    const [tagType, openClose] = type.split('_');
+
+    // if (openClose && openClose === 'open') {
+    //   return acc + `<${tag}>`;
+    // }
+
+    // if (openClose && openClose === 'close') {
+    //   return acc + `</${tag}>`;
+    // }
+
+    if (type === 'code_inline') {
+      const newSelection = selectionState.merge({
+        anchorOffset: 0,
+        focusOffset: content.length,
+      });
+
+      const newContent = Modifier.replaceText(contentState, newSelection, content);
+
+      return Modifier.applyInlineStyle(
+        newContent,
+        newSelection.merge({
+          anchorOffset: content.length,
+        }),
+        'CODE'
+      );
+      // return acc + `<${tag}>${content}</${tag}`;
+
     }
 
-    if (type === 'strong_close') {
-      return acc + '</strong>';
-    }
+    // return acc + content;
+  }, {});
 
-    return acc + content;
-  }, '');
-
-  console.log('result', result);
+  console.log('result', result, tokens);
 
   return result;
 };
@@ -105,10 +128,27 @@ const createMDPlugin = (config = {}) => {
       const text = getCurrentText(editorState);
       const content = editorState.getCurrentContent();
       const selection = editorState.getSelection();
-      console.log(
-        'text',
-        renderInline({ content, selection }, md.parseInline(text)[0].children)
-      );
+      // console.log(
+      //   'text',
+      //   renderInline({ editorState, contentState: content, selectionState: selection }, md.parseInline(text)[0].children)
+      // );
+
+      const inlines = md.parseInline(text)[0].children;
+
+      console.log('mmmmm', inlines);
+
+      if (!inlines.every(({ type }) => type === 'text')) {
+        const newInlines = renderInline({ editorState, contentState: content, selectionState: selection }, inlines);
+        const newEditorState = EditorState.push(
+          editorState,
+          newInlines,
+          'change-inline-style'
+        );
+
+        setEditorState(newEditorState);
+
+        return 'handled';
+      }
 
       // block styles
       if (character !== ' ') {
