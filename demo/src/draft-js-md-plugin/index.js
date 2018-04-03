@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { EditorState, Modifier, RichUtils } from 'draft-js';
 
 import MarkdownIt from 'markdown-it';
@@ -55,13 +53,6 @@ const headerMap = [
   'header-six',
 ];
 
-const inlineMap = {
-  BOLD: [/\*\*([^(?:**)]+)\*\*/g, /__([^(?:__)]+)__/g],
-  ITALIC: [/\*([^*]+)\*/g, /_([^_]+)_/g],
-  CODE: [/`([^`]+)`/g],
-  STRIKETHROUGH: [/~~([^(?:~~)]+)~~/g],
-};
-
 // bold: **sss**
 // italic: *sim*
 // code: `sss`
@@ -69,7 +60,10 @@ const inlineMap = {
 
 const md = new MarkdownIt();
 
-export const renderInline = ({ editorState, contentState, selectionState }, tokens) => {
+export const renderInline = (
+  { editorState, contentState, selectionState },
+  tokens
+) => {
   console.log('tokens', tokens);
   const result = tokens.reduce((acc, { type, tag, content, ...rest }) => {
     console.log('token', type, tag, content, rest);
@@ -90,7 +84,11 @@ export const renderInline = ({ editorState, contentState, selectionState }, toke
         focusOffset: content.length,
       });
 
-      const newContent = Modifier.replaceText(contentState, newSelection, content);
+      const newContent = Modifier.replaceText(
+        contentState,
+        newSelection,
+        content
+      );
 
       return Modifier.applyInlineStyle(
         newContent,
@@ -100,7 +98,6 @@ export const renderInline = ({ editorState, contentState, selectionState }, toke
         'CODE'
       );
       // return acc + `<${tag}>${content}</${tag}`;
-
     }
 
     // return acc + content;
@@ -111,7 +108,6 @@ export const renderInline = ({ editorState, contentState, selectionState }, toke
   return result;
 };
 
-console.log('md', md);
 const createMDPlugin = (config = {}) => {
   const store = {
     getEditorState: undefined,
@@ -135,10 +131,13 @@ const createMDPlugin = (config = {}) => {
 
       const inlines = md.parseInline(text)[0].children;
 
-      console.log('mmmmm', inlines);
+      console.log('inlines', inlines);
 
       if (!inlines.every(({ type }) => type === 'text')) {
-        const newInlines = renderInline({ editorState, contentState: content, selectionState: selection }, inlines);
+        const newInlines = renderInline(
+          { editorState, contentState: content, selectionState: selection },
+          inlines
+        );
         const newEditorState = EditorState.push(
           editorState,
           newInlines,
